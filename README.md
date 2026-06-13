@@ -1,156 +1,265 @@
 DashTube
 
-
-
 <img width="96" height="96" alt="Dashtube" src="https://github.com/user-attachments/assets/3c095f60-23ca-4750-8de5-58f246712372" />
 
 
 
 DashTube/
-├── README.md
-├── LICENSE
+
+DashTube/
 ├── .gitignore
+├── LICENSE
+├── README.md
 ├── build.properties
 ├── build.xml
-├── src/
-│   ├── VideoProxyBrowserMIDlet.java
-│   ├── HtmlPageCanvas.java
-│   ├── SiteParser.java
-│   ├── Utils.java
-│   ├── FileManager.java
-│   ├── DownloadQueue.java
-│   ├── DownloadChoiceCanvas.java
-│   ├── DownloadProgressScreen.java
-│   ├── CaptchaScreen.java
-│   ├── LoginScreen.java
-│   ├── SavedFilesScreen.java
-│   ├── AboutCanvas.java
-│   ├── ConvertScreen.java
-│   ├── MusicCanvas.java
-│   ├── MusicItem.java
-│   ├── ImageSearchCanvas.java
-│   └── MusicSearchScreen.java
-├── res/
-│   └── Dashtube.png
+├── docs/
+│   ├── INSTALL.md
+│   └── USER_GUIDE.md
 ├── lib/
-│   └── (no external JARs - pure MIDP)
-└── docs/
-    ├── INSTALL.md
-    └── USER_GUIDE.md
+│   └── README.md             # Explains pure MIDP architecture
+├── res/
+│   └── Dashtube.png          # App icon (24x24 or 32x32 px)
+└── src/
+    ├── VideoProxyBrowserMIDlet.java  # Main Application Entry Point
+    ├── SiteParser.java               # 2yxa / YT / TikTok HTML & JSON parser
+    ├── Utils.java                    # String manipulation, network wrappers
+    ├── FileManager.java              # JSR-75 FileConnection operations
+    ├── DownloadQueue.java            # Sequential background worker thread
+    │
+    └── ui/                           # Grouped UI components for clarity
+        ├── HtmlPageCanvas.java       # Core rendering engine (Dark UI)
+        ├── DownloadChoiceCanvas.java # Formats/Qualities selector
+        ├── DownloadProgressScreen.java
+        ├── CaptchaScreen.java
+        ├── LoginScreen.java
+        ├── SavedFilesScreen.java
+        ├── AboutCanvas.java
+        ├── ConvertScreen.java
+        ├── MusicCanvas.java
+        ├── MusicItem.java
+        ├── ImageSearchCanvas.java
+        └── MusicSearchScreen.java
+
+```
+
+---
+
+## ⚙️ Build Automation Files
+
+### `.gitignore`
+
+```gitignore
+# Ant & WTK Build Artifacts
+build/
+dist/
+bin/
+classes/
+tmp/
+*.jar
+*.jad
+
+# IDE configs
+.eclipse/
+.idea/
+*.iml
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+```
+
+### `build.properties`
+
+```properties
+# Path to your Sun Wireless Toolkit installation
+wtk.home=C:/WTK2.5.2
+
+# Target Device Profile Specs
+midp.version=2.0
+cldc.version=1.1
+
+# Application Metadata
+app.name=DashTube
+app.version=1.2.1
+app.vendor=BLACK ANIMATION V2
+
+```
+
+### `build.xml`
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="DashTube" default="jar" basesdir=".">
+    <property file="build.properties"/>
+
+    <property name="src.dir" value="src"/>
+    <property name="res.dir" value="res"/>
+    <property name="build.dir" value="build"/>
+    <property name="classes.dir" value="${build.dir}/classes"/>
+    <property name="dist.dir" value="dist"/>
+
+    <target name="clean">
+        <delete dir="${build.dir}"/>
+        <delete dir="${dist.dir}"/>
+    </target>
+
+    <target name="init" depends="clean">
+        <mkdir dir="${classes.dir}"/>
+        <mkdir dir="${dist.dir}"/>
+    </target>
+
+    <target name="compile" depends="init">
+        <javac srcdir="${src.dir}" 
+               destdir="${classes.dir}" 
+               target="1.3" 
+               source="1.3"
+               bootclasspath="${wtk.home}/lib/midpapi20.jar;${wtk.home}/lib/cldcapi11.jar"
+               includeantruntime="false"
+               debug="true"/>
+    </target>
+
+    <target name="preverify" depends="compile">
+        <exec executable="${wtk.home}/bin/preverify">
+            <arg value="-classpath"/>
+            <arg value="${wtk.home}/lib/midpapi20.jar;${wtk.home}/lib/cldcapi11.jar"/>
+            <arg value="-d"/>
+            <arg value="${classes.dir}"/>
+            <arg value="${classes.dir}"/>
+        </exec>
+    </target>
+
+    <target name="jar" depends="preverify">
+        <!-- Generate JAD File -->
+        <echo file="${dist.dir}/${app.name}.jad" append="false">MIDlet-Name: ${app.name}
+MIDlet-Version: ${app.version}
+MIDlet-Vendor: ${app.vendor}
+MIDlet-Jar-URL: ${app.name}.jar
+MIDlet-1: ${app.name}, /Dashtube.png, VideoProxyBrowserMIDlet
+MicroEdition-Profile: MIDP-${midp.version}
+MicroEdition-Configuration: CLDC-${cldc.version}
+</echo>
+
+        <!-- Generate JAR Archive -->
+        <jar destfile="${dist.dir}/${app.name}.jar" manifest="${dist.dir}/${app.name}.jad">
+            <fileset dir="${classes.dir}"/>
+            <fileset dir="${res.dir}"/>
+        </jar>
+        
+        <!-- Update JAR Size info in JAD -->
+        <length file="${dist.dir}/${app.name}.jar" property="jar.length"/>
+        <echo file="${dist.dir}/${app.name}.jad" append="true">MIDlet-Jar-Size: ${jar.length}
+</echo>
+    </target>
+</project>
+
+```
+
+---
 
 
 
 # DashTube v1.2.1
 
-**YouTube/Video/Audio Downloader & Streamer for J2ME Feature Phones**
+[![Platform](https://img.shields.io/badge/Platform-J2ME%20%2F%20MIDP%202.0-orange.svg)](https://en.wikipedia.org/wiki/Java_Platform,_Micro_Edition)
+[![Configuration](https://img.shields.io/badge/Config-CLDC%201.1-blue.svg)]()
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-[![MIDP 2.0](https://img.shields.io/badge/MIDP-2.0-blue.svg)]()
-[![CLDC 1.1](https://img.shields.io/badge/CLDC-1.1-green.svg)]()
-[![JSR-75](https://img.shields.io/badge/JSR--75-FileConnection-orange.svg)]()
+DashTube is a highly optimized multimedia browser, streaming client, and download manager built natively for Java ME (J2ME) enabled feature phones. It provides legacy mobile hardware with a streamlined portal to discover, play back, and download video and audio content across modern web platforms.
 
-DashTube is a feature-rich multimedia browser and downloader for Java ME (J2ME) enabled feature phones. It allows you to search, stream, and download videos and music from various sources including YouTube, TikTok, and the 2yxa.mobi platform.
+---
 
-![DashTube Screenshot](https://via.placeholder.com/240x320?text=DashTube)
+## 🎥 Features
 
-## Features
+* **Advanced Media Downloader:** Multi-format pipeline targeting MP4, 3GP, and MP3 processing formats.
+* **Background Queue Manager:** Seamless sequential background downloading tracking status, speeds, and block sizes via JSR-75.
+* **Optimized Parsing Engine:** Handled by low-overhead extraction scripts for YouTube, TikTok, and backend platforms.
+* **Dynamic Media Search:** Separate modules for dedicated music searches and multi-resolution image extraction.
+* **Cyber-Neon Dark UI:** custom `CustomCanvas` styling framework engineered specifically for performance on 240x320 resolution arrays, featuring low-contrast scrolling indicators and touch responsiveness.
+* **Legacy Security Integrations:** Specialized handler screens accommodating explicit User Sign-in and interactive captcha bypass routines.
 
-- 🎥 **Video Streaming & Download** - Stream MP4/3GP or save to storage
-- 🎵 **Music Search** - Search and download MP3/AAC files
-- 🖼️ **Image Search** - Find and save images with size/resolution options
-- 📦 **Download Queue** - Sequential download manager with progress tracking
-- 🔐 **Login Support** - Save credentials to bypass CAPTCHAs
-- 📱 **Touch Support** - Works on Nokia 5800 and touch-enabled devices
-- 💾 **File Storage** - Uses JSR-75 FileConnection for permanent storage
-- 🎨 **Dark UI** - Modern dark theme with accent colors
+---
 
-## Supported Sites
+## 🌐 Architecture & Network Flow
 
-- video.2yxa.mobi (primary API)
-- YouTube (via extraction)
-- TikTok (via extraction)
+To overcome modern HTTPS (TLS 1.2/1.3) handshakes and hefty JSON payloads that easily crash KVM memory boundaries on feature phones, DashTube offloads scraping logic to an external infrastructure edge proxy.
 
-## Requirements
 
-- **MIDP 2.0** - Mobile Information Device Profile
-- **CLDC 1.1** - Connected Limited Device Configuration
-- **JSR-75** - FileConnection API (for saving files)
-- **JSR-135** - MMAPI (for media playback)
-- Network connectivity (GPRS/EDGE/3G/WiFi)
+```
 
-## Supported Devices
+[MIDP Client] ──(HTTP/Basic Payload)──> [Cloudflare Worker Proxy]
+│
+(Data Extraction)
+▼
+[Target Files] <──(Direct Byte Stream)── [YT / TikTok / 2yxa]
 
-- Nokia S60 3rd/5th Edition (5800, N95, N73, etc.)
-- Sony Ericsson Java phones
-- Samsung Java feature phones
-- Any MIDP 2.0 device with JSR-75
+```
 
-## Installation
+> [!NOTE]
+> Network requests flow securely through the pre-configured deployment endpoint: `2yxa-proxy.ndukadavid70.workers.dev`.
 
-### From JAR file
-1. Download `DashTube.jar` and `DashTube.jad`
-2. Transfer to your phone via Bluetooth/USB
-3. Install through phone's file manager
+---
 
-### Building from source
+## 🛠️ Requirements
+
+### Runtime API Dependencies
+* **CLDC 1.1** (Connected Limited Device Configuration)
+* **MIDP 2.0** (Mobile Information Device Profile)
+* **JSR-75** (FileConnection API) — Required for local media storage initialization
+* **JSR-135** (Mobile Media API / MMAPI) — Required for audio and streaming processing pipelines
+
+### Target Hardware Compatibility Profile
+* **Nokia S60 Series:** 3rd Edition, 5th Edition (Nokia 5800 XpressMusic, N95, E72, E5, etc.)
+* **Low-Resource Feature Phones:** Itel 5615, Tecno T528, and generic MediaTek-powered environments.
+* **Touch Optimization:** Includes full pointer-event tracking constraints for early resistive/capacitive touch screen standards.
+
+---
+
+## ⌨️ Global Keybindings Reference
+
+| Mapping Option | Key Assignment | Contextual System Response |
+| :--- | :--- | :--- |
+| **Up / Down** | `D-Pad / Navigation keys` | Traverses link list node indices |
+| **Select / Execute** | `FIRE / OK Key` | Activates action handlers / canvas changes |
+| **Return Route** | `Right Softkey` | Cancels processes / backs out of screens |
+| **Search Prompt** | `0 Key` | Fires input textbox overlays globally |
+| **Local Directory** | `7 Key` | Instant jump route to `SavedFilesScreen` |
+| **Contextual Menu** | `Left Softkey` | Exposes target-specific action option sets |
+
+---
+
+## 📦 Compilation Environment Setup
+
+### Prerequisites
+1. **Java Development Kit (JDK 8 or lower):** J2ME byte-code verification stages rely on internal classes compiled specifically under target format configurations matching `-target 1.3`.
+2. **Sun Java Wireless Toolkit (WTK) 2.5.2** (or equivalent vendor SDK environments like Nokia SDK).
+
+### Build Procedure
+Clone and deploy compilation targets via Apache Ant:
+
 ```bash
-ant jar
-
-Quick Start
-
-    Login (optional) - Enter credentials to avoid CAPTCHAs
-
-    Search - Use the search box to find videos
-
-    Select - Choose from search results
-
-    Download/Stream - Pick your preferred quality
-
-    View Queue - Monitor progress in Download Queue
-
-Key Commands
-Action	Key
-Navigate Up/Down	D-pad
-Select Item	FIRE / OK
-Back	Right softkey
-Search	0 key
-Saved Videos	7 key
-Options Menu	Left softkey
-Configuration
-
-The app uses a Cloudflare proxy server (2yxa-proxy.ndukadavid70.workers.dev) to bypass network restrictions. No additional configuration required.
-Building
-Prerequisites
-
-    Java JDK 8 or earlier (for WTK compatibility)
-
-    Sun Java Wireless Toolkit 2.5.2 or newer
-
-Steps
-bash
-
-# Clone the repository
-git clone https://github.com/yourusername/DashTube.git
+# Clone source structure safely
+git clone [https://github.com/yourusername/DashTube.git](https://github.com/yourusername/DashTube.git)
 cd DashTube
 
-# Build with Ant
+# Fire compile, preverification, and package rules
 ant jar
 
-# Output: dist/DashTube.jar
+```
 
-License
+Generated distributions (`DashTube.jar` / `DashTube.jad`) will output inside the local `/dist` directory folder automatically.
 
-MIT License - See LICENSE file for details
-Acknowledgments
+---
 
-    2yxa.mobi for providing the API
+## 📜 Credits & Disclaimers
 
-    J2ME community for MIDP/CLDC specifications
+* **Lead Developer:** `BLACK ANIMATION V2`
+* **API Providers:** Powered in connection with the backend interfaces of `2yxa.mobi`.
 
-Disclaimer
+*This utility is provided explicitly as an educational utility asset. Users retain total liability and assume structural responsibility regarding compliance layout rules involving digital rights protections active across target asset networks inside local legal jurisdictions.*
 
-This app is for educational purposes. Users are responsible for complying with copyright laws in their jurisdiction when downloading content.
-Support
+```
 
-For issues and feature requests, please open a GitHub issue.
-
-Developed by DASH ANIMATION V2
+```
