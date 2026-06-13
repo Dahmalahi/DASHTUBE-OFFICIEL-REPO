@@ -95,10 +95,9 @@ Generated distributions (`DashTube.jar` / `DashTube.jad`) will output inside the
 
 ## 📜 Credits & Disclaimers
 
-* **Lead Developer:** `BLACK ANIMATION V2`
+* **Lead Developer:** `DASH ANIMATION V2`
 * **API Providers:** Powered in connection with the backend interfaces of `2yxa.mobi`.
 
-*This utility is provided explicitly as an educational utility asset. Users retain total liability and assume structural responsibility regarding compliance layout rules involving digital rights protections active across target asset networks inside local legal jurisdictions.*
 
 ```
 
