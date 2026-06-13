@@ -6,7 +6,6 @@ DashTube
 
 
 
-
 DashTube/
 ├── README.md
 ├── LICENSE
@@ -39,9 +38,7 @@ DashTube/
     ├── INSTALL.md
     └── USER_GUIDE.md
 
-File Contents
-README.md
-markdown
+
 
 # DashTube v1.2.1
 
